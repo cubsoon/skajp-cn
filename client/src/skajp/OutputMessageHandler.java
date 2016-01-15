@@ -14,7 +14,7 @@ public class OutputMessageHandler implements Runnable {
 
 	private TargetDataLine dataLine;
 
-	private OutputStream output;
+	private OutputStream outputStream;
 
 	private final AtomicBoolean running;
 
@@ -24,7 +24,11 @@ public class OutputMessageHandler implements Runnable {
 
 	private byte[] buffer;
 
-	public OutputMessageHandler() throws LineUnavailableException {
+	public OutputMessageHandler(OutputStream outputStream, String sender, String receiver) throws LineUnavailableException {
+		this.outputStream = outputStream;
+		this.sender = sender;
+		this.receiver = receiver;
+		
 		this.running = new AtomicBoolean(true);
 		this.buffer = new byte[SwingApplication.BUFFER_SIZE];
 
@@ -52,7 +56,7 @@ public class OutputMessageHandler implements Runnable {
 			while (this.running.get()) {
 				this.dataLine.read(outputMessage.getTransmissionData(), 0, 512);
 				int i = outputMessage.toBuffer(buffer);
-				output.write(buffer, 0, i);
+				outputStream.write(buffer, 0, i);
 			} 
 		}
 		catch (Exception ex) {
@@ -66,12 +70,6 @@ public class OutputMessageHandler implements Runnable {
 
 	public AtomicBoolean getRunning() {
 		return running;
-	}
-
-	public void setTransmissionParameters(OutputStream outputStream, String sender, String receiver) {
-		this.output = outputStream;
-		this.sender = sender;
-		this.receiver = receiver;
 	}
 
 }

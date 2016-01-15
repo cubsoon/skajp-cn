@@ -31,8 +31,9 @@ public class MessageHandler implements Runnable {
 	
 	private Thread playThread;
 
-	public MessageHandler(SwingApplication application) throws LineUnavailableException {
+	public MessageHandler(SwingApplication application, InputStream inputStream) throws LineUnavailableException {
 		this.application = application;
+		this.inputStream = inputStream;
 		this.running = new AtomicBoolean(true);
 		this.buffer = new byte[SwingApplication.BUFFER_SIZE];
 
@@ -72,6 +73,7 @@ public class MessageHandler implements Runnable {
 								JOptionPane.YES_NO_OPTION
 								);
 						if (choice == JOptionPane.YES_OPTION) {
+							application.setOutputHandler(sender);
 							application.setApplicationState(ApplicationState.STATE_TRANSMISSION);
 						}
 					}

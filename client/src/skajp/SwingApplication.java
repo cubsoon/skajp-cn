@@ -1,15 +1,13 @@
 package skajp;
 
-import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.swing.*;        
 
@@ -99,11 +97,6 @@ public class SwingApplication implements ActionListener {
                 application.createAndShowGUI();
             }
         });
-    	
-    	application.messageHandler = new MessageHandler(application);
-    	application.inputThread = new Thread(application.messageHandler);
-    	application.outputMessageHandler = new OutputMessageHandler();
-    	application.outputThread = new Thread(application.outputMessageHandler);
     }
     
     public ApplicationState getApplicationState() {
@@ -116,9 +109,12 @@ public class SwingApplication implements ActionListener {
     	}
     	if (state.equals(ApplicationState.STATE_IDLE)) {
     		try {
-    			messageHandler.getRunning().set(false);
-        		outputMessageHandler.getRunning().set(false);
-    			
+    			if (messageHandler != null) {
+    				messageHandler.getRunning().set(false);
+    			}
+        		if (outputMessageHandler != null) {
+        			outputMessageHandler.getRunning().set(false);
+        		}
     			if (socket != null) {
 	    			socket.close();
 	    		}
@@ -191,7 +187,8 @@ public class SwingApplication implements ActionListener {
 					throw new InvalidResponseException("Wrong response - wrong name");
 				}
 				
-				messageHandler.setInputStream(input);
+				messageHandler = new MessageHandler(this, input);
+		    	inputThread = new Thread(messageHandler);
 				inputThread.start();
 				
 				setApplicationState(ApplicationState.STATE_CONNECTED);
@@ -210,7 +207,8 @@ public class SwingApplication implements ActionListener {
 				int n = callMessage.toBuffer(buffer);
 				output.write(buffer, 0, n);
 				
-				outputMessageHandler.setTransmissionParameters(output, senderNameField.getText(), receiverNameField.getText());
+				outputMessageHandler = new OutputMessageHandler(output, senderNameField.getText(), receiverNameField.getText());
+		    	outputThread = new Thread(outputMessageHandler);
 				outputThread.start();
 				
 				setApplicationState(ApplicationState.STATE_TRANSMISSION);
@@ -241,6 +239,23 @@ public class SwingApplication implements ActionListener {
 
 		JOptionPane.showMessageDialog(frame, ex.getMessage());
 		ex.printStackTrace();
+	}
+	
+	public void setOutputHandler(String senderName) throws LineUnavailableException {
+		Message callMessage = new Message();
+		callMessage.setMessageType(MessageType.MESSAGE_CONN);
+		callMessage.setSender(this.senderNameField.getText());
+		callMessage.setReceiver(senderName);
+		int n = callMessage.toBuffer(buffer);
+		try {
+			output.write(buffer, 0, n);
+		} catch (IOException e) {
+			outputException(e);
+		}
+		
+		this.outputMessageHandler = new OutputMessageHandler(output, this.senderNameField.getText(), senderName);
+		this.outputThread = new Thread(this.outputMessageHandler);
+		this.outputThread.start();
 	}
 	
 }

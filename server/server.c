@@ -28,7 +28,8 @@ void log(const char * str1, const char * str2)
     printf("[%s] %s\n", str1, str2);
 }
 
-void log2(const char * str1, const char * str2, const char * str8c) {
+void log2(const char * str1, const char * str2, const char * str8c)
+{
     char name[9];
     name[8] = '\0';
     strncpy(name, str8c, 8);
@@ -123,21 +124,26 @@ void remove_client(struct client_list_item * client_list, const char * name)
     }
 }
 
-void add_client(struct client_list_item * client_list, const char * name, struct cln * client)
+int add_client(struct client_list_item * client_list, const char * name, struct cln * client)
 {
     int i;
+    for (i = 0; i < 128; i++)
+    {
+        if (strncmp(client_list[i].name, name, 8) == 0)
+        {
+            return 0;
+        }
+    }
     for (i = 0; i < 128; i++)
     {
         if (client_list[i].client == NULL)
         {
             strncpy(client_list[i].name, name, 8);
             client_list[i].client = client;
-            break;
+            return 1;
         }
     }
-    if (i == 128) {
-        log("ADD_CLIENT", "Client not added");
-    }
+    return 0;
 }
 
 struct client_list_item * get_client(struct client_list_item * client_list, const char * name)
@@ -156,7 +162,8 @@ struct client_list_item * get_client(struct client_list_item * client_list, cons
 
 ssize_t write_mutexed(struct cln * c, const void * buffer, size_t count)
 {
-    if (c != NULL) {
+    if (c != NULL)
+    {
         pthread_mutex_lock(&c->write_mutex);
         write(c->cfd, buffer, count);
         pthread_mutex_unlock(&c->write_mutex);
@@ -178,31 +185,39 @@ void * cthread(void * arg)
         struct handshake_packet_rest * hs = (struct handshake_packet_rest *) rest;
         strncpy(sender, hs->sender, 8);
         log2("THREAD", "Client name is", sender);
-        add_client(c->client_list, sender, c);
-        write_mutexed(c, buffer, get_packet_size(packet));
-
-        log("THREAD", "Waiting for CONN packet...");
-        read(c->cfd, buffer, 2048);
-        if (strncmp(buffer, CONNECT_TYPE, 4) == 0)
+        if (add_client(c->client_list, sender, c))
         {
-            struct connection_packet_rest * cr = (struct connection_packet_rest *) rest;
-            strncpy(receiver, cr->receiver, 8);
-            log2("THREAD", "Receiver name is", receiver);
-            struct client_list_item * recv = get_client(c->client_list, receiver);
-            write_mutexed(recv->client, buffer, get_packet_size(buffer));
+            write_mutexed(c, buffer, get_packet_size(packet));
 
-            log("THREAD", "Starting transmission...");
-            while (1)
+            log("THREAD", "Waiting for CONN packet...");
+            read(c->cfd, buffer, 2048);
+            if (strncmp(buffer, CONNECT_TYPE, 4) == 0)
             {
-                read(c->cfd, buffer, 2048);
-                if (strncmp(packet->type, TRANSMISSION_TYPE, 4) != 0)
+                struct connection_packet_rest * cr = (struct connection_packet_rest *) rest;
+                strncpy(receiver, cr->receiver, 8);
+                log2("THREAD", "Receiver name is", receiver);
+                struct client_list_item * recv = get_client(c->client_list, receiver);
+                if (recv != NULL)
                 {
-                    continue;
-                }
-                write_mutexed(recv->client, buffer, get_packet_size(buffer));
-            }
-            log("THREAD", "Transmission ended.");
+                    write_mutexed(recv->client, buffer, get_packet_size(buffer));
 
+                    log("THREAD", "Starting transmission...");
+                    while (1)
+                    {
+                        read(c->cfd, buffer, 2048);
+                        if (strncmp(packet->type, BYE_TYPE, 4) == 0)
+                        {
+                            break;
+                        }
+                        if (strncmp(packet->type, TRANSMISSION_TYPE, 4) != 0)
+                        {
+                            continue;
+                        }
+                        write_mutexed(recv->client, buffer, get_packet_size(buffer));
+                    }
+                    log("THREAD", "Transmission ended.");
+                }
+            }
         }
     }
     log("THREAD", "Sending BYES...");
