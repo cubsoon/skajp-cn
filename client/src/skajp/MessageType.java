@@ -3,13 +3,13 @@ package skajp;
 import java.nio.charset.StandardCharsets;
 
 public enum MessageType {
-	MESSAGE_HELL("HELL"),
-	MESSAGE_CONN("CONN"),
-	MESSAGE_TRAN("TRAN"),
-	MESSAGE_BYES("BYES"),
-	MESSAGE_OTHER("XXXX");
+	MESSAGE_HELL("HELLOOOO"),
+	MESSAGE_CONN("CONNECTT"),
+	MESSAGE_TRAN("TRANSMIT"),
+	MESSAGE_BYES("BYESSSSS"),
+	MESSAGE_OTHER("XXXXXXXX");
 	
-	private static final int HEADER_LENGTH = 4;
+	private static final int HEADER_LENGTH = 8;
 	
 	private byte[] bytes;
 	

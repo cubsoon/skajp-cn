@@ -59,21 +59,21 @@ public class Message {
 	}
 	
 	public int toBuffer(byte[] buffer) {
-		ByteUtils.strncpy(buffer, 0, messageType.getBytes(), 4);
+		ByteUtils.strncpy(buffer, 0, messageType.getBytes(), 8);
 		switch (messageType) {
 			case MESSAGE_HELL:
 			case MESSAGE_BYES:
-				ByteUtils.strncpy(buffer, 4, sender, 8);
-				return 12;
+				ByteUtils.strncpy(buffer, 8, sender, 8);
+				return 16;
 			case MESSAGE_CONN:
-				ByteUtils.strncpy(buffer, 4, sender, 8);
-				ByteUtils.strncpy(buffer, 12, receiver, 8);
-				return 20;
+				ByteUtils.strncpy(buffer, 8, sender, 8);
+				ByteUtils.strncpy(buffer, 16, receiver, 8);
+				return 24;
 			case MESSAGE_TRAN:
-				ByteUtils.strncpy(buffer, 4, sender, 8);
-				ByteUtils.strncpy(buffer, 12, receiver, 8);
-				ByteUtils.strncpy(buffer, 20, transmissionData, TRANSMISSION_SIZE);
-				return 20 + TRANSMISSION_SIZE;
+				ByteUtils.strncpy(buffer, 8, sender, 8);
+				ByteUtils.strncpy(buffer, 16, receiver, 8);
+				ByteUtils.strncpy(buffer, 24, transmissionData, TRANSMISSION_SIZE);
+				return 24 + TRANSMISSION_SIZE;
 		}
 		return 0;
 	}
@@ -83,17 +83,17 @@ public class Message {
 		switch (messageType) {
 			case MESSAGE_HELL:
 			case MESSAGE_BYES:
-				ByteUtils.strncpy(sender, buffer, 4, 8);
-				return 12;
+				ByteUtils.strncpy(sender, buffer, 8, 8);
+				return 16;
 			case MESSAGE_CONN:
-				ByteUtils.strncpy(sender, buffer, 4, 8);
-				ByteUtils.strncpy(receiver, buffer, 12,  8);
-				return 20;
+				ByteUtils.strncpy(sender, buffer, 8, 8);
+				ByteUtils.strncpy(receiver, buffer, 16,  8);
+				return 24;
 			case MESSAGE_TRAN:
-				ByteUtils.strncpy(sender, buffer, 4, 8);
-				ByteUtils.strncpy(receiver, buffer, 12, 8);
-				ByteUtils.strncpy(transmissionData, buffer, 20, TRANSMISSION_SIZE);
-				return 20 + TRANSMISSION_SIZE;
+				ByteUtils.strncpy(sender, buffer, 8, 8);
+				ByteUtils.strncpy(receiver, buffer, 16, 8);
+				ByteUtils.strncpy(transmissionData, buffer, 24, TRANSMISSION_SIZE);
+				return 24 + TRANSMISSION_SIZE;
 		}
 		return 0;	
 	}

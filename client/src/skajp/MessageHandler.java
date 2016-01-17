@@ -8,7 +8,6 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
-import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.AudioFormat.Encoding;
 import javax.sound.sampled.AudioSystem;
 import javax.swing.JOptionPane;
@@ -112,7 +111,7 @@ public class MessageHandler implements Runnable {
 
 	private void handleTransmission(Message inputMessage) {
 		dataLine.write(inputMessage.getTransmissionData(), 0, 512);
-		if (!playing && dataLine.available() >= 4192) {
+		if (!playing && dataLine.available() >= 2048) {
 			playThread.start();
 			playing = true; // !!! :D :D :D
 		}
